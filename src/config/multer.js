@@ -1,71 +1,69 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "./cloudinary.js";
 
-/* ================= ENSURE FOLDERS ================= */
+/**
+ * ============================
+ * CLOUDINARY STORAGE
+ * ============================
+ * - PDFs → raw
+ * - Images → image
+ * - Works for tests, homework, announcements, profile photo
+ */
 
-const ensureDir = (dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-};
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const isPdf = file.mimetype === "application/pdf";
 
-const baseUploadDir = "uploads";
+    // Decide folder logically (optional but clean)
+    let folder = "student-portal/others";
 
-ensureDir(baseUploadDir);
-ensureDir("uploads/tests");
-ensureDir("uploads/homework");
-ensureDir("uploads/announcements");
-ensureDir("uploads/profiles");
+    if (req.baseUrl.includes("tests")) folder = "student-portal/tests";
+    else if (req.baseUrl.includes("homework")) folder = "student-portal/homework";
+    else if (req.baseUrl.includes("announcements")) folder = "student-portal/announcements";
+    else if (req.baseUrl.includes("students")) folder = "student-portal/profiles";
 
-/* ================= STORAGE ================= */
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // Decide folder based on route
-    if (req.baseUrl.includes("tests")) {
-      cb(null, "uploads/tests");
-    } else if (req.baseUrl.includes("homework")) {
-      cb(null, "uploads/homework");
-    } else if (req.baseUrl.includes("announcements")) {
-      cb(null, "uploads/announcements");
-    } else {
-      cb(null, "uploads/profiles");
-    }
-  },
-
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
+    return {
+      folder,
+      resource_type: isPdf ? "raw" : "image",
+      allowed_formats: isPdf ? ["pdf"] : ["jpg", "jpeg", "png"],
+      public_id: `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`,
+    };
   },
 });
 
-/* ================= FILE FILTERS ================= */
+/**
+ * ============================
+ * FILE FILTERS
+ * ============================
+ */
 
 const imageFilter = (req, file, cb) => {
   const allowed = ["image/png", "image/jpeg", "image/jpg"];
-  allowed.includes(file.mimetype)
-    ? cb(null, true)
-    : cb(new Error("Only image files allowed"), false);
+  if (allowed.includes(file.mimetype)) cb(null, true);
+  else cb(new Error("Only image files allowed"), false);
 };
 
 const pdfFilter = (req, file, cb) => {
-  file.mimetype === "application/pdf"
-    ? cb(null, true)
-    : cb(new Error("Only PDF files allowed"), false);
+  if (file.mimetype === "application/pdf") cb(null, true);
+  else cb(new Error("Only PDF files allowed"), false);
 };
 
-/* ================= EXPORT UPLOADERS ================= */
+/**
+ * ============================
+ * EXPORT UPLOADERS
+ * ============================
+ */
 
 export const uploadProfile = multer({
   storage,
   fileFilter: imageFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
 });
 
 export const uploadPDF = multer({
   storage,
   fileFilter: pdfFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
 });
-
-export default multer({ storage });

@@ -1,23 +1,16 @@
 import dotenv from "dotenv";
-import mongoose from "mongoose";
-import express from "express";
-import path from "path";
-import { fileURLToPath } from "url";
-import app from "./app.js";
-import profileRoutes from "./routes/profile.routes.js";
-app.use("/api/profile", profileRoutes);
-app.use("/uploads", express.static("uploads"));
+dotenv.config(); // ✅ MUST BE FIRST
 
-dotenv.config();
+import mongoose from "mongoose";
+import app from "./app.js";
 
 const PORT = process.env.PORT || 5000;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ✅ VERY IMPORTANT
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-
+/**
+ * ============================
+ * START SERVER
+ * ============================
+ */
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
@@ -27,5 +20,5 @@ mongoose
     });
   })
   .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
+    console.error("❌ MongoDB connection error:", err.message);
   });

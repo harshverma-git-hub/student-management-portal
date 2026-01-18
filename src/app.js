@@ -8,6 +8,7 @@ import announcementRoutes from "./routes/announcement.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import path from "path";
 import recycleBinRoutes from "./routes/recycleBin.routes.js";
+import profileRoutes from "./routes/profile.routes.js";
 
 const app = express();
 
@@ -23,7 +24,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/uploads", express.static(path.resolve("src/uploads")));
 app.use("/api/recycle-bin", recycleBinRoutes);
-
+app.use("/api/profile", profileRoutes);
 
 
 app.get("/", (req, res) => {
