@@ -47,18 +47,16 @@ export const uploadTest = async (req, res) => {
     }
 
     const test = await Test.create({
-      title,
-      testDate,
-      pdf: req.file.path,
-      assignedTo,
-      batch: assignedTo === "BATCH" ? batch : null,
-      student: assignedTo === "STUDENT" ? studentObjectId : null,
-      maxMarks: Number(maxMarks),
-      marks:
-        assignedTo === "STUDENT"
-          ? Number(marks)
-          : null, // IMPORTANT
-    });
+  title,
+  testDate,
+  pdf: req.file?.path,
+  assignedTo,
+  batch: assignedTo === "BATCH" ? batch : null,
+  student: assignedTo === "STUDENT" ? studentObjectId : null,
+  maxMarks: Number(maxMarks),
+  marks: assignedTo === "STUDENT" ? Number(marks) : null,
+});
+
 
     res.status(201).json({
       message: "Test uploaded successfully",
