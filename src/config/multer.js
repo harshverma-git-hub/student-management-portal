@@ -19,25 +19,37 @@ const pdfFilter = (req, file, cb) => {
 
 /* ================= STORAGE ================= */
 
-const createStorage = (folder) =>
-  new CloudinaryStorage({
-    cloudinary,
-    params: {
-      folder: `student-portal/${folder}`,
-      resource_type: "auto", // VERY IMPORTANT (PDF + images)
-      public_id: () => Date.now() + "-" + Math.round(Math.random() * 1e9),
-    },
-  });
+// ✅ IMAGE STORAGE
+const imageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "student-portal/profiles",
+    resource_type: "image",
+    public_id: () =>
+      Date.now() + "-" + Math.round(Math.random() * 1e9),
+  },
+});
+
+// ✅ PDF STORAGE (THIS FIXES 401)
+const pdfStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "student-portal/documents",
+    resource_type: "raw", // 🔥 REQUIRED FOR PDFs
+    public_id: () =>
+      Date.now() + "-" + Math.round(Math.random() * 1e9),
+  },
+});
 
 /* ================= UPLOADERS ================= */
 
 export const uploadProfile = multer({
-  storage: createStorage("profiles"),
+  storage: imageStorage,
   fileFilter: imageFilter,
 });
 
 export const uploadPDF = multer({
-  storage: createStorage("documents"),
+  storage: pdfStorage,
   fileFilter: pdfFilter,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
 });
