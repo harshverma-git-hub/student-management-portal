@@ -5,57 +5,37 @@ import path from "path";
 
 const router = express.Router();
 
-/**
- * ============================
- * STREAM PDF INLINE (SECURE)
- * ============================
- */
 router.get("/view", protect, async (req, res) => {
   try {
     const { url } = req.query;
 
     if (!url) {
-      return res.status(400).json({ message: "File URL is required" });
+      return res.status(400).json({ message: "File URL required" });
     }
 
-    // 🔒 SECURITY: Allow ONLY Cloudinary raw PDFs
     if (!url.includes("res.cloudinary.com")) {
-      return res.status(403).json({ message: "Unauthorized file source" });
+      return res.status(403).json({ message: "Invalid file source" });
     }
 
-    const cloudinaryResponse = await axios.get(url, {
+    const response = await axios.get(url, {
       responseType: "stream",
     });
 
-    // 🧠 Extract filename (important for browser preview)
     const filename = path.basename(url.split("?")[0]);
 
-    // ✅ Required headers for INLINE preview
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
-      `inline; filename="${filename}"`
+      `inline; filename="${filename.endsWith(".pdf") ? filename : "file.pdf"}"`
     );
 
-    // ✅ Forward important headers if present
-    if (cloudinaryResponse.headers["content-length"]) {
-      res.setHeader(
-        "Content-Length",
-        cloudinaryResponse.headers["content-length"]
-      );
-    }
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "private, max-age=0");
 
-    if (cloudinaryResponse.headers["accept-ranges"]) {
-      res.setHeader(
-        "Accept-Ranges",
-        cloudinaryResponse.headers["accept-ranges"]
-      );
-    }
-
-    cloudinaryResponse.data.pipe(res);
+    response.data.pipe(res);
   } catch (error) {
     console.error("PDF stream error:", error.message);
-    res.status(500).json({ message: "Unable to stream PDF" });
+    res.status(500).json({ message: "Failed to stream PDF" });
   }
 });
 
