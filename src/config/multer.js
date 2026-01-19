@@ -1,3 +1,24 @@
+import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "./cloudinary.js";
+
+/* ================= FILE FILTERS ================= */
+
+const imageFilter = (req, file, cb) => {
+  const allowed = ["image/png", "image/jpeg", "image/jpg"];
+  allowed.includes(file.mimetype)
+    ? cb(null, true)
+    : cb(new Error("Only image files allowed"), false);
+};
+
+const pdfFilter = (req, file, cb) => {
+  file.mimetype === "application/pdf"
+    ? cb(null, true)
+    : cb(new Error("Only PDF files allowed"), false);
+};
+
+/* ================= STORAGE ================= */
+
 const createStorage = (folder, resourceType = "auto") =>
   new CloudinaryStorage({
     cloudinary,
@@ -9,13 +30,15 @@ const createStorage = (folder, resourceType = "auto") =>
     },
   });
 
+/* ================= UPLOADERS ================= */
+
 export const uploadProfile = multer({
   storage: createStorage("profiles", "image"),
   fileFilter: imageFilter,
 });
 
 export const uploadPDF = multer({
-  storage: createStorage("documents", "raw"), // ✅ FIX
+  storage: createStorage("documents", "raw"), // ✅ CRITICAL
   fileFilter: pdfFilter,
   limits: { fileSize: 10 * 1024 * 1024 },
 });
